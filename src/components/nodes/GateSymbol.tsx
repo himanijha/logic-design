@@ -59,6 +59,26 @@ export default function GateSymbol({ gateType, width: w, height: h }: GateSymbol
         </svg>
       )
     }
+    case 'INPUT': {
+      // Flat terminal edge on the left (nothing feeds it), pointed tip on
+      // the right where its one output wire leaves.
+      const d = `M4,2 L${bodyRight - 10},2 L${bodyRight - 2},${midY} L${bodyRight - 10},${h - 2} L4,${h - 2} Z`
+      return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+          <path d={d} className="gate-outline io-input" />
+        </svg>
+      )
+    }
+    case 'OUTPUT': {
+      // Mirror of INPUT: pointed tip on the left where its one input wire
+      // arrives, flat terminal edge on the right.
+      const d = `M4,${midY} L12,2 L${bodyRight - 2},2 L${bodyRight - 2},${h - 2} L12,${h - 2} Z`
+      return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+          <path d={d} className="gate-outline io-output" />
+        </svg>
+      )
+    }
     default: {
       return (
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>

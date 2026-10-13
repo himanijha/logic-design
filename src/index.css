@@ -7,6 +7,8 @@
   --node-fill: #ffffff;
   --node-stroke: #2b2f38;
   --node-selected: #3b6fe0;
+  --io-input-fill: #cdebd8;
+  --io-output-fill: #fbdfb8;
   color-scheme: light dark;
 }
 
@@ -20,6 +22,8 @@
     --node-fill: #262830;
     --node-stroke: #c9cbd2;
     --node-selected: #6d9bff;
+    --io-input-fill: #2b4a3a;
+    --io-output-fill: #4a3c20;
   }
 }
 
@@ -107,6 +111,14 @@ body {
 .gate-node.selected .gate-outline {
   stroke: var(--node-selected);
   stroke-width: 2;
+}
+
+.io-input {
+  fill: var(--io-input-fill);
+}
+
+.io-output {
+  fill: var(--io-output-fill);
 }
 
 .gate-type-label {

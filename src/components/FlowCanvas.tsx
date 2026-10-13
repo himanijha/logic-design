@@ -10,10 +10,12 @@ import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo } from 'react'
 import { GATE_SPECS } from '../model/gates'
 import type { CanvasNode } from '../model/types'
+import { computeExpressions, isBareVariableSource, nodeOutputExpr } from '../sim/expression'
 import { flattenCanvas } from '../sim/netlist'
 import { nodeInputValue, nodeOutputValue } from '../sim/portValue'
 import { useCircuitStore, useTemporalCircuitStore, WIRE_EDGE_TYPE } from '../store/circuitStore'
 import { useSimulationStore } from '../store/simulationStore'
+import { useUiStore } from '../store/uiStore'
 import GateNode from './nodes/GateNode'
 import GroupNode from './nodes/GroupNode'
 import WireEdge from './edges/WireEdge'
@@ -52,6 +54,7 @@ export default function FlowCanvas() {
   const snapshot = useSimulationStore((s) => s.history[s.index])
   const toggleInput = useSimulationStore((s) => s.toggleInput)
   const tickClock = useSimulationStore((s) => s.tickClock)
+  const showExpressions = useUiStore((s) => s.showExpressions)
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -126,14 +129,27 @@ export default function FlowCanvas() {
   }, [nodes, edges, simActive, snapshot, toggleInput, tickClock])
 
   const displayEdges = useMemo<Edge[]>(() => {
-    if (!simActive || !snapshot) return edges
-    const netlist = flattenCanvas(nodes, edges)
+    if (!simActive && !showExpressions) return edges
+
+    const netlist = simActive || showExpressions ? flattenCanvas(nodes, edges) : undefined
+    const exprs = showExpressions ? computeExpressions(netlist!.nodes, netlist!.edges) : undefined
+
     return edges.map((edge) => {
       if (!edge.sourceHandle) return edge
-      const value = nodeOutputValue(nodes, netlist, snapshot.outputs, edge.source, edge.sourceHandle)
-      return { ...edge, data: { ...edge.data, value } }
+      const value =
+        simActive && snapshot
+          ? nodeOutputValue(nodes, netlist!, snapshot.outputs, edge.source, edge.sourceHandle)
+          : undefined
+
+      const sourceNode = nodes.find((n) => n.id === edge.source)
+      const expr =
+        exprs && !isBareVariableSource(sourceNode)
+          ? nodeOutputExpr(nodes, netlist!, exprs, edge.source, edge.sourceHandle)
+          : undefined
+
+      return { ...edge, data: { ...edge.data, value, expr } }
     })
-  }, [edges, nodes, simActive, snapshot])
+  }, [edges, nodes, simActive, snapshot, showExpressions])
 
   return (
     <div className="canvas-wrapper">

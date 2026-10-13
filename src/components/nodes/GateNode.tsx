@@ -1,14 +1,19 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
-import { memo } from 'react'
+import { memo, useState } from 'react'
 import { GATE_SPECS } from '../../model/gates'
 import type { GateNode as GateNodeT } from '../../model/types'
+import { useCircuitStore } from '../../store/circuitStore'
 import GateSymbol from './GateSymbol'
 
 const WIDTH = 72
 const PORT_ROW_HEIGHT = 22
 const MIN_HEIGHT = 44
 
-function GateNode({ data, selected }: NodeProps<GateNodeT>) {
+function GateNode({ id, data, selected }: NodeProps<GateNodeT>) {
+  const renameGate = useCircuitStore((s) => s.renameGate)
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState('')
+
   const spec = GATE_SPECS[data.gateType]
   const portCount = Math.max(spec.inputs.length, spec.outputs.length, 1)
   const height = Math.max(MIN_HEIGHT, portCount * PORT_ROW_HEIGHT)
@@ -18,6 +23,16 @@ function GateNode({ data, selected }: NodeProps<GateNodeT>) {
   const onToggleInput = data.onToggleInput as (() => void) | undefined
   const onTick = data.onTick as (() => void) | undefined
   const clickable = data.gateType === 'INPUT' && Boolean(onToggleInput)
+
+  function startEditing() {
+    setDraft(data.label ?? '')
+    setEditing(true)
+  }
+
+  function commitEditing() {
+    renameGate(id, draft)
+    setEditing(false)
+  }
 
   return (
     <div
@@ -45,7 +60,32 @@ function GateNode({ data, selected }: NodeProps<GateNodeT>) {
         <GateSymbol gateType={data.gateType} width={WIDTH} height={height} />
       </div>
 
-      <div className="gate-type-label">{data.label ?? spec.label}</div>
+      {editing ? (
+        <input
+          autoFocus
+          className="gate-rename-input"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commitEditing}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            e.stopPropagation()
+            if (e.key === 'Enter') commitEditing()
+            else if (e.key === 'Escape') setEditing(false)
+          }}
+        />
+      ) : (
+        <div
+          className="gate-type-label"
+          title="Double-click to rename"
+          onDoubleClick={(e) => {
+            e.stopPropagation()
+            startEditing()
+          }}
+        >
+          {data.label ?? spec.label}
+        </div>
+      )}
 
       {data.gateType === 'CLOCK' && onTick && (
         <button

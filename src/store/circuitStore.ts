@@ -27,6 +27,7 @@ interface CircuitState {
   duplicateSelected: () => void
   groupSelected: () => void
   ungroup: (groupId: string) => void
+  renameGate: (nodeId: string, label: string) => void
   setNodes: (nodes: CanvasNode[]) => void
   setEdges: (edges: Edge[]) => void
   loadCircuit: (circuit: { nodes: CanvasNode[]; edges: Edge[] }) => void
@@ -256,6 +257,17 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
             ...rewritten,
             ...group.data.internalEdges,
           ],
+        })
+      },
+
+      renameGate: (nodeId, label) => {
+        const trimmed = label.trim()
+        set({
+          nodes: get().nodes.map((n) => {
+            if (n.id !== nodeId) return n
+            if (n.type === 'group') return { ...n, data: { ...n.data, label: trimmed || n.data.label } }
+            return { ...n, data: { ...n.data, label: trimmed || undefined } }
+          }),
         })
       },
 

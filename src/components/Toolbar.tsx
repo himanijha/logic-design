@@ -40,6 +40,8 @@ export default function Toolbar() {
   const toggleNetlist = useUiStore((s) => s.toggleNetlist)
   const truthTableOpen = useUiStore((s) => s.truthTableOpen)
   const toggleTruthTable = useUiStore((s) => s.toggleTruthTable)
+  const showExpressions = useUiStore((s) => s.showExpressions)
+  const toggleShowExpressions = useUiStore((s) => s.toggleShowExpressions)
 
   const selectedCount = nodes.filter((n) => n.selected).length
 
@@ -142,6 +144,14 @@ export default function Toolbar() {
         </button>
         <button type="button" className="toolbar-button" onClick={toggleTruthTable} title="Toggle truth table">
           {truthTableOpen ? 'Hide Truth Table' : 'Truth Table'}
+        </button>
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={toggleShowExpressions}
+          title="Label wires with the boolean expression they carry (double-click a gate's name to rename it, e.g. an INPUT to x/y/z)"
+        >
+          {showExpressions ? 'Hide Expressions' : 'Expressions'}
         </button>
         <button type="button" className="toolbar-button" onClick={() => exportToFile(nodes, edges)} title="Export circuit as JSON">
           Export

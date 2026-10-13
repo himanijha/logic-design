@@ -29,6 +29,7 @@ interface CircuitState {
   ungroup: (groupId: string) => void
   setNodes: (nodes: CanvasNode[]) => void
   setEdges: (edges: Edge[]) => void
+  loadCircuit: (circuit: { nodes: CanvasNode[]; edges: Edge[] }) => void
 }
 
 function makeGateNode(gateType: GateType, position: { x: number; y: number }): GateNode {
@@ -260,6 +261,7 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
 
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
+      loadCircuit: (circuit) => set({ nodes: circuit.nodes, edges: circuit.edges }),
     }),
     temporalOptions,
   ),

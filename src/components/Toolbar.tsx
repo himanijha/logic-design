@@ -1,6 +1,7 @@
 import { useReactFlow } from '@xyflow/react'
 import { useRef } from 'react'
 import { GATE_SPECS, PALETTE_GATE_TYPES, type GateType } from '../model/gates'
+import { exportToFile, importFromFile } from '../persistence'
 import { useCircuitStore, useTemporalCircuitStore } from '../store/circuitStore'
 import { useSimulationStore } from '../store/simulationStore'
 import { useUiStore } from '../store/uiStore'
@@ -13,7 +14,10 @@ export default function Toolbar() {
   const addGate = useCircuitStore((s) => s.addGate)
   const groupSelected = useCircuitStore((s) => s.groupSelected)
   const nodes = useCircuitStore((s) => s.nodes)
+  const edges = useCircuitStore((s) => s.edges)
+  const loadCircuit = useCircuitStore((s) => s.loadCircuit)
   const { screenToFlowPosition } = useReactFlow()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   // Monotonic — unlike nodes.length, this never goes back down after a
   // delete, so a newly placed gate can't land on top of a surviving one.
   const placedCount = useRef(0)
@@ -46,6 +50,21 @@ export default function Toolbar() {
       y: 160 + row * ROW_SPACING,
     })
     addGate(gateType, position)
+  }
+
+  function handleImportClick() {
+    fileInputRef.current?.click()
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const doc = await importFromFile(file)
+    if (doc) {
+      exitSim()
+      loadCircuit({ nodes: doc.nodes, edges: doc.edges })
+    }
   }
 
   return (
@@ -119,6 +138,19 @@ export default function Toolbar() {
         <button type="button" className="toolbar-button" onClick={toggleNetlist} title="Toggle read-only netlist view">
           {netlistOpen ? 'Hide Netlist' : 'Netlist'}
         </button>
+        <button type="button" className="toolbar-button" onClick={() => exportToFile(nodes, edges)} title="Export circuit as JSON">
+          Export
+        </button>
+        <button type="button" className="toolbar-button" onClick={handleImportClick} disabled={simActive} title="Import circuit from JSON">
+          Import
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="application/json"
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+        />
       </div>
     </div>
   )

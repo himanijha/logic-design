@@ -13,6 +13,8 @@ export type GateType =
   | 'OUTPUT'
   | 'CLOCK'
   | 'DFF'
+  | 'MUX2'
+  | 'MUX4'
 
 export interface PortSpec {
   id: string
@@ -118,6 +120,30 @@ export const GATE_SPECS: Record<GateType, GateSpec> = {
     evaluate: (inputs) => [Boolean(inputs[0])],
     stateful: true,
   },
+  MUX2: {
+    type: 'MUX2',
+    label: 'MUX2',
+    inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'sel', label: 'S' }],
+    outputs: [{ id: 'out', label: 'OUT' }],
+    evaluate: ([a, b, sel]) => [sel ? Boolean(b) : Boolean(a)],
+  },
+  MUX4: {
+    type: 'MUX4',
+    label: 'MUX4',
+    inputs: [
+      { id: 'd0', label: 'D0' },
+      { id: 'd1', label: 'D1' },
+      { id: 'd2', label: 'D2' },
+      { id: 'd3', label: 'D3' },
+      { id: 's0', label: 'S0' },
+      { id: 's1', label: 'S1' },
+    ],
+    outputs: [{ id: 'out', label: 'OUT' }],
+    evaluate: ([d0, d1, d2, d3, s0, s1]) => {
+      const index = (s1 ? 2 : 0) + (s0 ? 1 : 0)
+      return [Boolean([d0, d1, d2, d3][index])]
+    },
+  },
 }
 
 export const GATE_TYPES: GateType[] = Object.keys(GATE_SPECS) as GateType[]
@@ -134,4 +160,6 @@ export const PALETTE_GATE_TYPES: GateType[] = [
   'XNOR',
   'CLOCK',
   'DFF',
+  'MUX2',
+  'MUX4',
 ]

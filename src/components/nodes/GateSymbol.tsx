@@ -102,6 +102,21 @@ export default function GateSymbol({ gateType, width: w, height: h }: GateSymbol
         </svg>
       )
     }
+    case 'MUX2':
+    case 'MUX4': {
+      // Classic mux trapezoid: a full-height vertical edge on the input
+      // side, tapering to a shorter vertical edge on the output side.
+      const taper = h * 0.18
+      const d = `M4,2 L4,${h - 2} L${bodyRight - 4},${h - 2 - taper} L${bodyRight - 4},${2 + taper} Z`
+      return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+          <path d={d} className="gate-outline" fill="var(--node-fill)" />
+          <text x={w / 2 - 10} y={midY + 3} className="gate-pin-text">
+            {gateType === 'MUX2' ? 'MUX' : 'MUX4'}
+          </text>
+        </svg>
+      )
+    }
     default: {
       return (
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>

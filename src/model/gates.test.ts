@@ -37,4 +37,18 @@ describe('gate truth tables', () => {
     expect(GATE_SPECS.XNOR.evaluate([true, true])).toEqual([true])
     expect(GATE_SPECS.XNOR.evaluate([true, false])).toEqual([false])
   })
+
+  it('MUX2 selects A when S=0 and B when S=1', () => {
+    expect(GATE_SPECS.MUX2.evaluate([true, false, false])).toEqual([true])
+    expect(GATE_SPECS.MUX2.evaluate([true, false, true])).toEqual([false])
+    expect(GATE_SPECS.MUX2.evaluate([false, true, true])).toEqual([true])
+  })
+
+  it('MUX4 selects D[s1:s0] as a 2-bit index', () => {
+    const d = [true, false, true, false] // D0=1, D1=0, D2=1, D3=0
+    expect(GATE_SPECS.MUX4.evaluate([...d, false, false])).toEqual([true]) // sel=0 -> D0
+    expect(GATE_SPECS.MUX4.evaluate([...d, true, false])).toEqual([false]) // sel=1 -> D1
+    expect(GATE_SPECS.MUX4.evaluate([...d, false, true])).toEqual([true]) // sel=2 -> D2
+    expect(GATE_SPECS.MUX4.evaluate([...d, true, true])).toEqual([false]) // sel=3 -> D3
+  })
 })

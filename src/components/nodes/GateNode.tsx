@@ -1,7 +1,7 @@
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import { memo } from 'react'
 import { GATE_SPECS } from '../../model/gates'
-import type { GateNode as GateNodeT } from '../../store/circuitStore'
+import type { GateNode as GateNodeT } from '../../model/types'
 import GateSymbol from './GateSymbol'
 
 const WIDTH = 72

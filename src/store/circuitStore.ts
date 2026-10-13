@@ -4,7 +4,6 @@ import {
   type Connection,
   type Edge,
   type EdgeChange,
-  type Node,
   type NodeChange,
 } from '@xyflow/react'
 import { nanoid } from 'nanoid'
@@ -13,22 +12,22 @@ import { useStore } from 'zustand'
 import { createWithEqualityFn } from 'zustand/traditional'
 import { shallow } from 'zustand/shallow'
 import { GATE_SPECS, type GateType } from '../model/gates'
-import type { GateNodeData } from '../model/types'
-
-export type GateNode = Node<GateNodeData, 'gate'>
+import type { CanvasNode, GateNode, GroupNode, GroupPortMapping } from '../model/types'
 
 export const WIRE_EDGE_TYPE = 'wire'
 
 interface CircuitState {
-  nodes: GateNode[]
+  nodes: CanvasNode[]
   edges: Edge[]
-  onNodesChange: (changes: NodeChange<GateNode>[]) => void
+  onNodesChange: (changes: NodeChange<CanvasNode>[]) => void
   onEdgesChange: (changes: EdgeChange[]) => void
   onConnect: (connection: Connection) => void
   addGate: (gateType: GateType, position: { x: number; y: number }) => void
   removeSelected: () => void
   duplicateSelected: () => void
-  setNodes: (nodes: GateNode[]) => void
+  groupSelected: () => void
+  ungroup: (groupId: string) => void
+  setNodes: (nodes: CanvasNode[]) => void
   setEdges: (edges: Edge[]) => void
 }
 
@@ -39,6 +38,12 @@ function makeGateNode(gateType: GateType, position: { x: number; y: number }): G
     position,
     data: { gateType },
   }
+}
+
+function portLabel(node: GateNode, portId: string): string {
+  const spec = GATE_SPECS[node.data.gateType]
+  const port = [...spec.inputs, ...spec.outputs].find((p) => p.id === portId)
+  return port?.label ?? portId
 }
 
 type CircuitSnapshot = Pick<CircuitState, 'nodes' | 'edges'>
@@ -110,7 +115,7 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
         const idMap = new Map<string, string>()
         const offset = { x: 40, y: 40 }
 
-        const clones: GateNode[] = selectedNodes.map((n) => {
+        const clones: CanvasNode[] = selectedNodes.map((n) => {
           const newId = nanoid(8)
           idMap.set(n.id, newId)
           return {
@@ -119,7 +124,7 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
             selected: true,
             position: { x: n.position.x + offset.x, y: n.position.y + offset.y },
             data: { ...n.data },
-          }
+          } as CanvasNode
         })
 
         const selectedEdges = get().edges.filter(
@@ -139,6 +144,117 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
             ...clones,
           ],
           edges: [...get().edges.map((e) => ({ ...e, selected: false })), ...clonedEdges],
+        })
+      },
+
+      groupSelected: () => {
+        const { nodes, edges } = get()
+        const selected = nodes.filter((n) => n.selected && n.type === 'gate') as GateNode[]
+        if (selected.length < 2) return
+
+        const selectedIds = new Set(selected.map((n) => n.id))
+        const internalEdges = edges.filter(
+          (e) => selectedIds.has(e.source) && selectedIds.has(e.target),
+        )
+        const incoming = edges.filter(
+          (e) => !selectedIds.has(e.source) && selectedIds.has(e.target),
+        )
+        const outgoing = edges.filter(
+          (e) => selectedIds.has(e.source) && !selectedIds.has(e.target),
+        )
+
+        const minX = Math.min(...selected.map((n) => n.position.x))
+        const minY = Math.min(...selected.map((n) => n.position.y))
+
+        const internalNodes: GateNode[] = selected.map((n) => ({
+          ...n,
+          selected: false,
+          position: { x: n.position.x - minX, y: n.position.y - minY },
+        }))
+
+        const inputs: GroupPortMapping[] = incoming.map((e, i) => {
+          const targetNode = selected.find((n) => n.id === e.target)!
+          return {
+            portId: `in${i}`,
+            label: portLabel(targetNode, e.targetHandle ?? ''),
+            internalGateId: e.target,
+            internalPortId: e.targetHandle ?? '',
+          }
+        })
+        const outputs: GroupPortMapping[] = outgoing.map((e, i) => {
+          const sourceNode = selected.find((n) => n.id === e.source)!
+          return {
+            portId: `out${i}`,
+            label: portLabel(sourceNode, e.sourceHandle ?? ''),
+            internalGateId: e.source,
+            internalPortId: e.sourceHandle ?? '',
+          }
+        })
+
+        const groupId = nanoid(8)
+        const groupNode: GroupNode = {
+          id: groupId,
+          type: 'group',
+          position: { x: minX, y: minY },
+          selected: true,
+          data: { label: 'Group', internalNodes, internalEdges, inputs, outputs },
+        }
+
+        const rewrittenIncoming: Edge[] = incoming.map((e, i) => ({
+          ...e,
+          target: groupId,
+          targetHandle: inputs[i].portId,
+        }))
+        const rewrittenOutgoing: Edge[] = outgoing.map((e, i) => ({
+          ...e,
+          source: groupId,
+          sourceHandle: outputs[i].portId,
+        }))
+
+        const remainingEdgeIds = new Set([...internalEdges, ...incoming, ...outgoing].map((e) => e.id))
+
+        set({
+          nodes: [...nodes.filter((n) => !selectedIds.has(n.id)), groupNode],
+          edges: [
+            ...edges.filter((e) => !remainingEdgeIds.has(e.id)),
+            ...rewrittenIncoming,
+            ...rewrittenOutgoing,
+          ],
+        })
+      },
+
+      ungroup: (groupId) => {
+        const { nodes, edges } = get()
+        const group = nodes.find((n) => n.id === groupId && n.type === 'group') as
+          | GroupNode
+          | undefined
+        if (!group) return
+
+        const absoluteInternalNodes: GateNode[] = group.data.internalNodes.map((n) => ({
+          ...n,
+          position: { x: n.position.x + group.position.x, y: n.position.y + group.position.y },
+        }))
+
+        const rewritten: Edge[] = edges
+          .filter((e) => e.source === groupId || e.target === groupId)
+          .map((e) => {
+            if (e.target === groupId) {
+              const mapping = group.data.inputs.find((m) => m.portId === e.targetHandle)
+              if (!mapping) return e
+              return { ...e, target: mapping.internalGateId, targetHandle: mapping.internalPortId }
+            }
+            const mapping = group.data.outputs.find((m) => m.portId === e.sourceHandle)
+            if (!mapping) return e
+            return { ...e, source: mapping.internalGateId, sourceHandle: mapping.internalPortId }
+          })
+
+        set({
+          nodes: [...nodes.filter((n) => n.id !== groupId), ...absoluteInternalNodes],
+          edges: [
+            ...edges.filter((e) => e.source !== groupId && e.target !== groupId),
+            ...rewritten,
+            ...group.data.internalEdges,
+          ],
         })
       },
 

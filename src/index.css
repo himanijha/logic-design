@@ -214,3 +214,43 @@ body {
   padding: 0;
   pointer-events: auto;
 }
+
+.group-node {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border: 1.5px dashed var(--node-stroke);
+  border-radius: 10px;
+}
+
+.group-node.selected {
+  border-color: var(--node-selected);
+}
+
+.group-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.group-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.group-expand-button {
+  pointer-events: auto;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 4px;
+  font-size: 10px;
+  padding: 1px 6px;
+  cursor: pointer;
+}

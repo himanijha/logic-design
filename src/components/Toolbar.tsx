@@ -10,6 +10,8 @@ const ROW_SPACING = 90
 
 export default function Toolbar() {
   const addGate = useCircuitStore((s) => s.addGate)
+  const groupSelected = useCircuitStore((s) => s.groupSelected)
+  const nodes = useCircuitStore((s) => s.nodes)
   const { screenToFlowPosition } = useReactFlow()
   // Monotonic — unlike nodes.length, this never goes back down after a
   // delete, so a newly placed gate can't land on top of a surviving one.
@@ -28,6 +30,8 @@ export default function Toolbar() {
   const resetSim = useSimulationStore((s) => s.reset)
   const simIndex = useSimulationStore((s) => s.index)
   const simHistoryLength = useSimulationStore((s) => s.history.length)
+
+  const selectedCount = nodes.filter((n) => n.selected).length
 
   function handleAddGate(gateType: GateType) {
     const index = placedCount.current++
@@ -63,6 +67,15 @@ export default function Toolbar() {
         </button>
         <button type="button" className="toolbar-button" onClick={() => redo()} disabled={futureCount === 0 || simActive} title="Redo (Ctrl+Shift+Z)">
           Redo
+        </button>
+        <button
+          type="button"
+          className="toolbar-button"
+          onClick={() => groupSelected()}
+          disabled={selectedCount < 2 || simActive}
+          title="Group selected gates (Ctrl+G)"
+        >
+          Group
         </button>
       </div>
 

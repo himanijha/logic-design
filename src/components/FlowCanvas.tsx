@@ -9,20 +9,17 @@ import {
 import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo } from 'react'
 import { GATE_SPECS } from '../model/gates'
+import type { CanvasNode } from '../model/types'
 import { flattenCanvas } from '../sim/netlist'
 import { nodeInputValue, nodeOutputValue } from '../sim/portValue'
-import {
-  useCircuitStore,
-  useTemporalCircuitStore,
-  WIRE_EDGE_TYPE,
-  type GateNode as GateNodeT,
-} from '../store/circuitStore'
+import { useCircuitStore, useTemporalCircuitStore, WIRE_EDGE_TYPE } from '../store/circuitStore'
 import { useSimulationStore } from '../store/simulationStore'
 import GateNode from './nodes/GateNode'
+import GroupNode from './nodes/GroupNode'
 import WireEdge from './edges/WireEdge'
 import Toolbar from './Toolbar'
 
-const nodeTypes = { gate: GateNode }
+const nodeTypes = { gate: GateNode, group: GroupNode }
 const edgeTypes = { [WIRE_EDGE_TYPE]: WireEdge }
 
 const GRID: [number, number] = [16, 16]
@@ -45,6 +42,7 @@ export default function FlowCanvas() {
   const onEdgesChange = useCircuitStore((s) => s.onEdgesChange)
   const onConnect = useCircuitStore((s) => s.onConnect)
   const duplicateSelected = useCircuitStore((s) => s.duplicateSelected)
+  const groupSelected = useCircuitStore((s) => s.groupSelected)
   const undo = useTemporalCircuitStore((s) => s.undo)
   const redo = useTemporalCircuitStore((s) => s.redo)
 
@@ -69,12 +67,15 @@ export default function FlowCanvas() {
       } else if (key === 'y') {
         event.preventDefault()
         redo()
+      } else if (key === 'g') {
+        event.preventDefault()
+        groupSelected()
       } else if (key === 'd' || key === 'v' || key === 'c') {
         event.preventDefault()
         duplicateSelected()
       }
     },
-    [undo, redo, duplicateSelected],
+    [undo, redo, groupSelected, duplicateSelected],
   )
 
   useEffect(() => {
@@ -82,12 +83,24 @@ export default function FlowCanvas() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  const displayNodes = useMemo<GateNodeT[]>(() => {
+  const displayNodes = useMemo<CanvasNode[]>(() => {
     if (!simActive || !snapshot) return nodes
 
     const netlist = flattenCanvas(nodes, edges)
+    const changedSet = new Set(snapshot.changedGateIds)
 
     return nodes.map((node) => {
+      if (node.type === 'group') {
+        const portValues: Record<string, boolean> = {}
+        for (const port of node.data.inputs) {
+          portValues[port.portId] = nodeInputValue(nodes, edges, netlist, snapshot.outputs, node.id, port.portId)
+        }
+        for (const port of node.data.outputs) {
+          portValues[port.portId] = nodeOutputValue(nodes, netlist, snapshot.outputs, node.id, port.portId)
+        }
+        return { ...node, data: { ...node.data, portValues } }
+      }
+
       const spec = GATE_SPECS[node.data.gateType]
       const portValues: Record<string, boolean> = {}
       for (const port of spec.inputs) {
@@ -102,7 +115,7 @@ export default function FlowCanvas() {
         data: {
           ...node.data,
           portValues,
-          changed: snapshot.changedGateIds.includes(node.id),
+          changed: changedSet.has(node.id),
           onToggleInput: node.data.gateType === 'INPUT' ? () => toggleInput(node.id) : undefined,
           onTick: node.data.gateType === 'CLOCK' ? () => tickClock(node.id) : undefined,
         },

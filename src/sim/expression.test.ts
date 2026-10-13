@@ -1,7 +1,7 @@
 import type { Edge } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import type { GateNode } from '../model/types'
-import { computeExpressions, isBareVariableSource } from './expression'
+import { computeExpressions } from './expression'
 
 function gate(id: string, gateType: GateNode['data']['gateType'], label?: string): GateNode {
   return { id, type: 'gate', position: { x: 0, y: 0 }, data: { gateType, label } }
@@ -42,6 +42,13 @@ describe('computeExpressions', () => {
     expect(exprs.out).toEqual(["(x·y)'"])
   })
 
+  it('labels a wire leaving an INPUT directly with its bare variable name', () => {
+    const nodes = [gate('x', 'INPUT', 'x'), gate('not', 'NOT')]
+    const edges = [wire('x', 'out', 'not', 'a')]
+    const exprs = computeExpressions(nodes, edges)
+    expect(exprs.x).toEqual(['x'])
+  })
+
   it('primes a bare variable without wrapping it in parens', () => {
     const nodes = [gate('x', 'INPUT', 'x'), gate('not', 'NOT')]
     const edges = [wire('x', 'out', 'not', 'a')]
@@ -60,16 +67,5 @@ describe('computeExpressions', () => {
     const exprs = computeExpressions(nodes, edges)
     expect(exprs.a).toEqual(['⟲'])
     expect(exprs.b).toEqual(['⟲'])
-  })
-})
-
-describe('isBareVariableSource', () => {
-  it('is true only for INPUT and CLOCK gates, whose output is just their own name', () => {
-    expect(isBareVariableSource(gate('a', 'INPUT'))).toBe(true)
-    expect(isBareVariableSource(gate('b', 'CLOCK'))).toBe(true)
-    expect(isBareVariableSource(gate('c', 'AND'))).toBe(false)
-    expect(isBareVariableSource(gate('d', 'NOT'))).toBe(false)
-    expect(isBareVariableSource(gate('e', 'DFF'))).toBe(false)
-    expect(isBareVariableSource(undefined)).toBe(false)
   })
 })

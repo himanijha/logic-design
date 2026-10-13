@@ -3,26 +3,42 @@ import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, type EdgeProps } from '
 /** Right-angle wire, colored by its carried signal while a simulation is
  * active, and optionally labeled with its symbolic boolean expression
  * (both injected into `data` by FlowCanvas). */
-export default function WireEdge(props: EdgeProps) {
-  const { value, expr } = (props.data as { value?: boolean; expr?: string } | undefined) ?? {}
+export default function WireEdge({
+  id,
+  sourceX,
+  sourceY,
+  sourcePosition,
+  targetX,
+  targetY,
+  targetPosition,
+  style,
+  markerStart,
+  markerEnd,
+  interactionWidth,
+  data,
+}: EdgeProps) {
+  const { value, expr } = (data as { value?: boolean; expr?: string } | undefined) ?? {}
   const color = value === undefined ? undefined : value ? 'var(--signal-high)' : 'var(--signal-low)'
 
   const [path, labelX, labelY] = getSmoothStepPath({
-    sourceX: props.sourceX,
-    sourceY: props.sourceY,
-    sourcePosition: props.sourcePosition,
-    targetX: props.targetX,
-    targetY: props.targetY,
-    targetPosition: props.targetPosition,
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
     borderRadius: 0,
   })
 
   return (
     <>
       <BaseEdge
-        {...props}
+        id={id}
         path={path}
-        style={{ ...props.style, strokeWidth: value === undefined ? 2 : 2.5, stroke: color }}
+        style={{ ...style, strokeWidth: value === undefined ? 2 : 2.5, stroke: color }}
+        markerStart={markerStart}
+        markerEnd={markerEnd}
+        interactionWidth={interactionWidth}
       />
       {expr && (
         <EdgeLabelRenderer>

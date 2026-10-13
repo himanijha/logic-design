@@ -187,12 +187,3 @@ export function computeCanvasExpressions(nodes: CanvasNode[], edges: Edge[]) {
   const exprs = computeExpressions(netlist.nodes, netlist.edges)
   return { netlist, exprs }
 }
-
-/**
- * A wire leaving an INPUT or CLOCK directly carries nothing but that
- * gate's own bare variable name — already shown on the gate itself — so
- * labeling the wire too would just be clutter right next to it.
- */
-export function isBareVariableSource(node: CanvasNode | undefined): boolean {
-  return node?.type === 'gate' && (node.data.gateType === 'INPUT' || node.data.gateType === 'CLOCK')
-}

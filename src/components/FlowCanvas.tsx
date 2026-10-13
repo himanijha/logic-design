@@ -10,7 +10,7 @@ import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo } from 'react'
 import { GATE_SPECS } from '../model/gates'
 import type { CanvasNode } from '../model/types'
-import { computeExpressions, isBareVariableSource, nodeOutputExpr } from '../sim/expression'
+import { computeExpressions, nodeOutputExpr } from '../sim/expression'
 import { flattenCanvas } from '../sim/netlist'
 import { nodeInputValue, nodeOutputValue } from '../sim/portValue'
 import { useCircuitStore, useTemporalCircuitStore, WIRE_EDGE_TYPE } from '../store/circuitStore'
@@ -141,11 +141,7 @@ export default function FlowCanvas() {
           ? nodeOutputValue(nodes, netlist!, snapshot.outputs, edge.source, edge.sourceHandle)
           : undefined
 
-      const sourceNode = nodes.find((n) => n.id === edge.source)
-      const expr =
-        exprs && !isBareVariableSource(sourceNode)
-          ? nodeOutputExpr(nodes, netlist!, exprs, edge.source, edge.sourceHandle)
-          : undefined
+      const expr = exprs ? nodeOutputExpr(nodes, netlist!, exprs, edge.source, edge.sourceHandle) : undefined
 
       return { ...edge, data: { ...edge.data, value, expr } }
     })

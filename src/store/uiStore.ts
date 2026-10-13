@@ -7,6 +7,8 @@ interface UiState {
   toggleTruthTable: () => void
   showExpressions: boolean
   toggleShowExpressions: () => void
+  helpOpen: boolean
+  toggleHelp: () => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -14,6 +16,8 @@ export const useUiStore = create<UiState>((set) => ({
   toggleNetlist: () => set((s) => ({ netlistOpen: !s.netlistOpen, truthTableOpen: false })),
   truthTableOpen: false,
   toggleTruthTable: () => set((s) => ({ truthTableOpen: !s.truthTableOpen, netlistOpen: false })),
-  showExpressions: false,
+  showExpressions: true,
   toggleShowExpressions: () => set((s) => ({ showExpressions: !s.showExpressions })),
+  helpOpen: false,
+  toggleHelp: () => set((s) => ({ helpOpen: !s.helpOpen })),
 }))

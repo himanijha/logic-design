@@ -11,7 +11,7 @@ import { useUiStore } from './store/uiStore'
 beforeEach(() => {
   useCircuitStore.setState({ nodes: [], edges: [] })
   useSimulationStore.setState({ active: false, history: [], index: 0 })
-  useUiStore.setState({ netlistOpen: false, truthTableOpen: false, showExpressions: false })
+  useUiStore.setState({ netlistOpen: false, truthTableOpen: false, showExpressions: false, helpOpen: false })
   localStorage.clear()
 })
 
@@ -110,5 +110,18 @@ describe('simulate end-to-end', () => {
     expect(exprs[in1.id]).toEqual(['x'])
     expect(exprs[in2.id]).toEqual(['y'])
     expect(exprs[and.id]).toEqual(['(x·y)'])
+  })
+
+  it('opens and closes the help tutorial from the gear button', () => {
+    render(<App />)
+
+    expect(screen.queryByText('How this works')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByTitle('How this works'))
+    expect(screen.getByText('How this works')).toBeInTheDocument()
+    expect(screen.getByText('Grouping / collapsing')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByTitle('How this works'))
+    expect(screen.queryByText('How this works')).not.toBeInTheDocument()
   })
 })

@@ -2,6 +2,7 @@ import { useReactFlow } from '@xyflow/react'
 import { useRef } from 'react'
 import { GATE_SPECS, PALETTE_GATE_TYPES, type GateType } from '../model/gates'
 import { useCircuitStore, useTemporalCircuitStore } from '../store/circuitStore'
+import { useSimulationStore } from '../store/simulationStore'
 
 const COLS = 4
 const COL_SPACING = 140
@@ -18,6 +19,15 @@ export default function Toolbar() {
   const redo = useTemporalCircuitStore((s) => s.redo)
   const pastCount = useTemporalCircuitStore((s) => s.pastStates.length)
   const futureCount = useTemporalCircuitStore((s) => s.futureStates.length)
+
+  const simActive = useSimulationStore((s) => s.active)
+  const enterSim = useSimulationStore((s) => s.enter)
+  const exitSim = useSimulationStore((s) => s.exit)
+  const stepBack = useSimulationStore((s) => s.stepBack)
+  const stepForward = useSimulationStore((s) => s.stepForward)
+  const resetSim = useSimulationStore((s) => s.reset)
+  const simIndex = useSimulationStore((s) => s.index)
+  const simHistoryLength = useSimulationStore((s) => s.history.length)
 
   function handleAddGate(gateType: GateType) {
     const index = placedCount.current++
@@ -39,31 +49,53 @@ export default function Toolbar() {
             type="button"
             className="toolbar-button"
             onClick={() => handleAddGate(gateType)}
+            disabled={simActive}
             title={`Add ${GATE_SPECS[gateType].label} gate`}
           >
             {GATE_SPECS[gateType].label}
           </button>
         ))}
       </div>
+
       <div className="toolbar-group">
-        <button
-          type="button"
-          className="toolbar-button"
-          onClick={() => undo()}
-          disabled={pastCount === 0}
-          title="Undo (Ctrl+Z)"
-        >
+        <button type="button" className="toolbar-button" onClick={() => undo()} disabled={pastCount === 0 || simActive} title="Undo (Ctrl+Z)">
           Undo
         </button>
-        <button
-          type="button"
-          className="toolbar-button"
-          onClick={() => redo()}
-          disabled={futureCount === 0}
-          title="Redo (Ctrl+Shift+Z)"
-        >
+        <button type="button" className="toolbar-button" onClick={() => redo()} disabled={futureCount === 0 || simActive} title="Redo (Ctrl+Shift+Z)">
           Redo
         </button>
+      </div>
+
+      <div className="toolbar-group">
+        {!simActive ? (
+          <button type="button" className="toolbar-button" onClick={() => enterSim()} title="Enter simulation mode">
+            ▶ Simulate
+          </button>
+        ) : (
+          <>
+            <button type="button" className="toolbar-button" onClick={() => exitSim()} title="Back to editing">
+              ■ Stop
+            </button>
+            <button type="button" className="toolbar-button" onClick={() => stepBack()} disabled={simIndex === 0} title="Step back">
+              ◀
+            </button>
+            <span className="toolbar-button" style={{ cursor: 'default' }}>
+              {simIndex + 1}/{simHistoryLength}
+            </span>
+            <button
+              type="button"
+              className="toolbar-button"
+              onClick={() => stepForward()}
+              disabled={simIndex >= simHistoryLength - 1}
+              title="Step forward"
+            >
+              ▶
+            </button>
+            <button type="button" className="toolbar-button" onClick={() => resetSim()} title="Reset simulation">
+              ↺
+            </button>
+          </>
+        )}
       </div>
     </div>
   )

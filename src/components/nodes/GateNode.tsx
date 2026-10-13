@@ -13,10 +13,19 @@ function GateNode({ data, selected }: NodeProps<GateNodeT>) {
   const portCount = Math.max(spec.inputs.length, spec.outputs.length, 1)
   const height = Math.max(MIN_HEIGHT, portCount * PORT_ROW_HEIGHT)
 
+  const portValues = data.portValues as Record<string, boolean> | undefined
+  const changed = Boolean(data.changed)
+  const onToggleInput = data.onToggleInput as (() => void) | undefined
+  const onTick = data.onTick as (() => void) | undefined
+  const clickable = data.gateType === 'INPUT' && Boolean(onToggleInput)
+
   return (
     <div
-      className={`gate-node${selected ? ' selected' : ''}`}
+      className={`gate-node${selected ? ' selected' : ''}${changed ? ' changed' : ''}${clickable ? ' clickable' : ''}`}
       style={{ width: WIDTH, height }}
+      onClick={clickable ? onToggleInput : undefined}
+      role={clickable ? 'button' : undefined}
+      title={clickable ? 'Click to toggle' : undefined}
     >
       {spec.inputs.map((port, i) => (
         <Handle
@@ -28,6 +37,7 @@ function GateNode({ data, selected }: NodeProps<GateNodeT>) {
           className="port-handle"
         >
           <span className="port-label port-label-left">{port.label}</span>
+          {portValues && <ValueDot value={portValues[port.id]} side="left" />}
         </Handle>
       ))}
 
@@ -36,6 +46,20 @@ function GateNode({ data, selected }: NodeProps<GateNodeT>) {
       </div>
 
       <div className="gate-type-label">{data.label ?? spec.label}</div>
+
+      {data.gateType === 'CLOCK' && onTick && (
+        <button
+          type="button"
+          className="clock-tick-button"
+          title="Tick clock"
+          onClick={(e) => {
+            e.stopPropagation()
+            onTick()
+          }}
+        >
+          ⏵
+        </button>
+      )}
 
       {spec.outputs.map((port, i) => (
         <Handle
@@ -47,9 +71,19 @@ function GateNode({ data, selected }: NodeProps<GateNodeT>) {
           className="port-handle"
         >
           <span className="port-label port-label-right">{port.label}</span>
+          {portValues && <ValueDot value={portValues[port.id]} side="right" />}
         </Handle>
       ))}
     </div>
+  )
+}
+
+function ValueDot({ value, side }: { value: boolean | undefined; side: 'left' | 'right' }) {
+  return (
+    <span
+      className={`port-value-dot ${value ? 'high' : 'low'}`}
+      style={side === 'left' ? { left: 12 } : { right: 12 }}
+    />
   )
 }
 

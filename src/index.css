@@ -9,6 +9,9 @@
   --node-selected: #3b6fe0;
   --io-input-fill: #cdebd8;
   --io-output-fill: #fbdfb8;
+  --signal-high: #2fae4e;
+  --signal-low: #9aa0ab;
+  --changed-ring: #e0a93b;
   color-scheme: light dark;
 }
 
@@ -24,6 +27,9 @@
     --node-selected: #6d9bff;
     --io-input-fill: #2b4a3a;
     --io-output-fill: #4a3c20;
+    --signal-high: #49d472;
+    --signal-low: #6b7078;
+    --changed-ring: #e0a93b;
   }
 }
 
@@ -163,4 +169,48 @@ body {
 
 .port-label-right {
   right: 10px;
+}
+
+.gate-node.changed {
+  filter: drop-shadow(0 0 0 2px var(--changed-ring));
+}
+
+.gate-node.changed .gate-outline {
+  stroke: var(--changed-ring);
+  stroke-width: 2.5;
+}
+
+.gate-node.clickable {
+  cursor: pointer;
+}
+
+.port-value-dot {
+  position: absolute;
+  top: -5px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--signal-low);
+}
+
+.port-value-dot.high {
+  background: var(--signal-high);
+  box-shadow: 0 0 4px var(--signal-high);
+}
+
+.clock-tick-button {
+  position: absolute;
+  bottom: -18px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+  line-height: 1;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  pointer-events: auto;
 }

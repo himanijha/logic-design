@@ -19,6 +19,7 @@ import GroupNode from './nodes/GroupNode'
 import WireEdge from './edges/WireEdge'
 import Toolbar from './Toolbar'
 import NetlistPanel from './NetlistPanel'
+import TruthTablePanel from './TruthTablePanel'
 
 const nodeTypes = { gate: GateNode, group: GroupNode }
 const edgeTypes = { [WIRE_EDGE_TYPE]: WireEdge }
@@ -138,6 +139,7 @@ export default function FlowCanvas() {
     <div className="canvas-wrapper">
       <Toolbar />
       <NetlistPanel />
+      <TruthTablePanel />
       <ReactFlow
         nodes={displayNodes}
         edges={displayEdges}

@@ -38,6 +38,8 @@ export default function Toolbar() {
 
   const netlistOpen = useUiStore((s) => s.netlistOpen)
   const toggleNetlist = useUiStore((s) => s.toggleNetlist)
+  const truthTableOpen = useUiStore((s) => s.truthTableOpen)
+  const toggleTruthTable = useUiStore((s) => s.toggleTruthTable)
 
   const selectedCount = nodes.filter((n) => n.selected).length
 
@@ -137,6 +139,9 @@ export default function Toolbar() {
       <div className="toolbar-group">
         <button type="button" className="toolbar-button" onClick={toggleNetlist} title="Toggle read-only netlist view">
           {netlistOpen ? 'Hide Netlist' : 'Netlist'}
+        </button>
+        <button type="button" className="toolbar-button" onClick={toggleTruthTable} title="Toggle truth table">
+          {truthTableOpen ? 'Hide Truth Table' : 'Truth Table'}
         </button>
         <button type="button" className="toolbar-button" onClick={() => exportToFile(nodes, edges)} title="Export circuit as JSON">
           Export

@@ -292,3 +292,32 @@ body {
   font-size: 16px;
   cursor: pointer;
 }
+
+.truth-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+}
+
+.truth-table th,
+.truth-table td {
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  text-align: center;
+}
+
+.truth-table th {
+  background: var(--bg);
+  font-weight: 600;
+}
+
+.truth-table-output-col {
+  border-left: 2px solid var(--accent);
+}
+
+.truth-table-note {
+  font-size: 11px;
+  opacity: 0.75;
+  margin: 6px 0;
+}

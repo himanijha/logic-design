@@ -3,6 +3,7 @@ import { useRef } from 'react'
 import { GATE_SPECS, PALETTE_GATE_TYPES, type GateType } from '../model/gates'
 import { useCircuitStore, useTemporalCircuitStore } from '../store/circuitStore'
 import { useSimulationStore } from '../store/simulationStore'
+import { useUiStore } from '../store/uiStore'
 
 const COLS = 4
 const COL_SPACING = 140
@@ -30,6 +31,9 @@ export default function Toolbar() {
   const resetSim = useSimulationStore((s) => s.reset)
   const simIndex = useSimulationStore((s) => s.index)
   const simHistoryLength = useSimulationStore((s) => s.history.length)
+
+  const netlistOpen = useUiStore((s) => s.netlistOpen)
+  const toggleNetlist = useUiStore((s) => s.toggleNetlist)
 
   const selectedCount = nodes.filter((n) => n.selected).length
 
@@ -109,6 +113,12 @@ export default function Toolbar() {
             </button>
           </>
         )}
+      </div>
+
+      <div className="toolbar-group">
+        <button type="button" className="toolbar-button" onClick={toggleNetlist} title="Toggle read-only netlist view">
+          {netlistOpen ? 'Hide Netlist' : 'Netlist'}
+        </button>
       </div>
     </div>
   )

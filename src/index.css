@@ -121,6 +121,13 @@ body {
   fill: var(--io-output-fill);
 }
 
+.gate-pin-text {
+  font-size: 9px;
+  fill: var(--node-stroke);
+  stroke: none;
+  font-weight: 600;
+}
+
 .gate-type-label {
   position: absolute;
   bottom: -18px;

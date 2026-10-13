@@ -11,6 +11,8 @@ export type GateType =
   | 'XNOR'
   | 'INPUT'
   | 'OUTPUT'
+  | 'CLOCK'
+  | 'DFF'
 
 export interface PortSpec {
   id: string
@@ -22,8 +24,14 @@ export interface GateSpec {
   label: string
   inputs: PortSpec[]
   outputs: PortSpec[]
-  /** Pure boolean evaluation, used by the (future) simulation engine. */
+  /** Pure boolean evaluation, used by the simulation engine for
+   * combinational gates. Ignored for `stateful` gates — their output comes
+   * from the engine's register state instead (see sim/engine.ts). */
   evaluate: (inputs: boolean[]) => boolean[]
+  /** True for gates whose output is a register updated by clock edges
+   * (DFF) or by manual ticking (CLOCK), not by instantaneous combinational
+   * evaluation. Lets the engine break feedback loops at the right points. */
+  stateful?: boolean
 }
 
 const bin = (fn: (a: boolean, b: boolean) => boolean) => (inputs: boolean[]) => [
@@ -94,6 +102,22 @@ export const GATE_SPECS: Record<GateType, GateSpec> = {
     outputs: [],
     evaluate: (inputs) => [Boolean(inputs[0])],
   },
+  CLOCK: {
+    type: 'CLOCK',
+    label: 'CLK',
+    inputs: [],
+    outputs: [{ id: 'clk', label: 'CLK' }],
+    evaluate: () => [false],
+    stateful: true,
+  },
+  DFF: {
+    type: 'DFF',
+    label: 'DFF',
+    inputs: [{ id: 'd', label: 'D' }, { id: 'clk', label: 'CLK' }],
+    outputs: [{ id: 'q', label: 'Q' }],
+    evaluate: (inputs) => [Boolean(inputs[0])],
+    stateful: true,
+  },
 }
 
 export const GATE_TYPES: GateType[] = Object.keys(GATE_SPECS) as GateType[]
@@ -108,4 +132,6 @@ export const PALETTE_GATE_TYPES: GateType[] = [
   'NAND',
   'NOR',
   'XNOR',
+  'CLOCK',
+  'DFF',
 ]

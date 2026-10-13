@@ -79,6 +79,29 @@ export default function GateSymbol({ gateType, width: w, height: h }: GateSymbol
         </svg>
       )
     }
+    case 'CLOCK': {
+      // A pulse-train glyph inside a rounded box, the usual clock-source icon.
+      const pulse = `M4,${midY + 8} h6 v-14 h8 v14 h8 v-14 h6`
+      return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+          <rect x={2} y={2} width={w - 4} height={h - 4} rx={6} className="gate-outline" fill="var(--node-fill)" />
+          <path d={pulse} className="gate-outline" fill="none" />
+        </svg>
+      )
+    }
+    case 'DFF': {
+      // Register box with D/Q pin labels and a clock triangle at the CLK pin.
+      const clkY = h - 10
+      const triangle = `M4,${clkY - 4} L10,${clkY} L4,${clkY + 4} Z`
+      return (
+        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+          <rect x={2} y={2} width={w - 4} height={h - 4} rx={3} className="gate-outline" fill="var(--node-fill)" />
+          <text x={8} y={16} className="gate-pin-text">D</text>
+          <text x={w - 16} y={16} className="gate-pin-text">Q</text>
+          <path d={triangle} className="gate-outline" fill="none" />
+        </svg>
+      )
+    }
     default: {
       return (
         <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>

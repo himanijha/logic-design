@@ -1,8 +1,9 @@
 import { useReactFlow } from '@xyflow/react'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { exportDiagramAsImage } from '../imageExport'
 import { GATE_SPECS, type GateType } from '../model/gates'
 import { exportToFile, importFromFile } from '../persistence'
+import { copyShareLink } from '../shareLink'
 import { useCircuitStore, useTemporalCircuitStore } from '../store/circuitStore'
 import { useSimulationStore } from '../store/simulationStore'
 import { useUiStore } from '../store/uiStore'
@@ -26,6 +27,7 @@ export default function Toolbar() {
   const loadCircuit = useCircuitStore((s) => s.loadCircuit)
   const { screenToFlowPosition, getNodes } = useReactFlow()
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
   // Monotonic — unlike nodes.length, this never goes back down after a
   // delete, so a newly placed gate can't land on top of a surviving one.
   const placedCount = useRef(0)
@@ -77,6 +79,13 @@ export default function Toolbar() {
       exitSim()
       loadCircuit({ nodes: doc.nodes, edges: doc.edges })
     }
+  }
+
+  async function handleCopyLink() {
+    const url = await copyShareLink(nodes, edges)
+    if (!url) return
+    setLinkCopied(true)
+    setTimeout(() => setLinkCopied(false), 1500)
   }
 
   return (
@@ -191,6 +200,15 @@ export default function Toolbar() {
             title="Download the diagram as a PNG image"
           >
             Export Image
+          </button>
+          <button
+            type="button"
+            className="toolbar-button"
+            onClick={handleCopyLink}
+            disabled={nodes.length === 0}
+            title="Copy a link that reopens this exact circuit"
+          >
+            {linkCopied ? 'Copied!' : 'Share Link'}
           </button>
           <input
             ref={fileInputRef}

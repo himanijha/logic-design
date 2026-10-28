@@ -94,13 +94,17 @@ export const GATE_SPECS: Record<GateType, GateSpec> = {
     type: 'INPUT',
     label: 'IN',
     inputs: [],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    // No port label here: the gate body already says "IN" and the
+    // pointed-right shape shows which way current flows, so labeling the
+    // single port "OUT" right next to it just duplicated/contradicted that.
+    outputs: [{ id: 'out', label: '' }],
     evaluate: () => [false],
   },
   OUTPUT: {
     type: 'OUTPUT',
     label: 'OUT',
-    inputs: [{ id: 'a', label: 'A' }],
+    // Same reasoning as INPUT above, mirrored: no "A" label on the one port.
+    inputs: [{ id: 'a', label: '' }],
     outputs: [],
     evaluate: (inputs) => [Boolean(inputs[0])],
   },

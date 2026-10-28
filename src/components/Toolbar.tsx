@@ -1,5 +1,6 @@
 import { useReactFlow } from '@xyflow/react'
 import { useRef } from 'react'
+import { exportDiagramAsImage } from '../imageExport'
 import { GATE_SPECS, type GateType } from '../model/gates'
 import { exportToFile, importFromFile } from '../persistence'
 import { useCircuitStore, useTemporalCircuitStore } from '../store/circuitStore'
@@ -23,7 +24,7 @@ export default function Toolbar() {
   const nodes = useCircuitStore((s) => s.nodes)
   const edges = useCircuitStore((s) => s.edges)
   const loadCircuit = useCircuitStore((s) => s.loadCircuit)
-  const { screenToFlowPosition } = useReactFlow()
+  const { screenToFlowPosition, getNodes } = useReactFlow()
   const fileInputRef = useRef<HTMLInputElement>(null)
   // Monotonic — unlike nodes.length, this never goes back down after a
   // delete, so a newly placed gate can't land on top of a surviving one.
@@ -181,6 +182,15 @@ export default function Toolbar() {
           </button>
           <button type="button" className="toolbar-button" onClick={handleImportClick} disabled={simActive} title="Import circuit from JSON">
             Import
+          </button>
+          <button
+            type="button"
+            className="toolbar-button"
+            onClick={() => exportDiagramAsImage(getNodes())}
+            disabled={nodes.length === 0}
+            title="Download the diagram as a PNG image"
+          >
+            Export Image
           </button>
           <input
             ref={fileInputRef}

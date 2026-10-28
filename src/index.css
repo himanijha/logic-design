@@ -338,6 +338,24 @@ body {
   cursor: pointer;
 }
 
+.side-panel-action {
+  display: block;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.side-panel-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
 .truth-table {
   border-collapse: collapse;
   width: 100%;

@@ -1,3 +1,4 @@
+import { exportTruthTableToCsv } from '../persistence'
 import { EMPTY_SIM_STATE } from '../sim/engine'
 import { computeTruthTable } from '../sim/truthTable'
 import { useCircuitStore } from '../store/circuitStore'
@@ -25,6 +26,12 @@ export default function TruthTablePanel() {
         ×
       </button>
       <h2>Truth Table</h2>
+
+      {table.inputLabels.length > 0 && table.outputLabels.length > 0 && (
+        <button type="button" className="side-panel-action" onClick={() => exportTruthTableToCsv(table)}>
+          Export CSV
+        </button>
+      )}
 
       {table.inputLabels.length === 0 && <p>Add an INPUT gate to see a truth table.</p>}
       {table.inputLabels.length > 0 && table.outputLabels.length === 0 && (

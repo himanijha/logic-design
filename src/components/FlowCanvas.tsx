@@ -4,11 +4,12 @@ import {
   MiniMap,
   ReactFlow,
   SelectionMode,
+  useReactFlow,
   type Edge,
   type IsValidConnection,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { GATE_SPECS } from '../model/gates'
 import type { CanvasNode } from '../model/types'
 import { computeExpressions, nodeInputExpr, nodeOutputExpr } from '../sim/expression'
@@ -58,6 +59,8 @@ export default function FlowCanvas() {
   const onEdgesChange = useCircuitStore((s) => s.onEdgesChange)
   const onConnect = useCircuitStore((s) => s.onConnect)
   const duplicateSelected = useCircuitStore((s) => s.duplicateSelected)
+  const copySelected = useCircuitStore((s) => s.copySelected)
+  const pasteClipboard = useCircuitStore((s) => s.pasteClipboard)
   const groupSelected = useCircuitStore((s) => s.groupSelected)
   const undo = useTemporalCircuitStore((s) => s.undo)
   const redo = useTemporalCircuitStore((s) => s.redo)
@@ -68,6 +71,9 @@ export default function FlowCanvas() {
   const tickClock = useSimulationStore((s) => s.tickClock)
   const showExpressions = useUiStore((s) => s.showExpressions)
   const setEditingWireId = useUiStore((s) => s.setEditingWireId)
+  const { screenToFlowPosition } = useReactFlow()
+  // Last cursor position over the canvas (screen coords), so paste can land there.
+  const pointer = useRef<{ x: number; y: number } | null>(null)
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -88,12 +94,21 @@ export default function FlowCanvas() {
       } else if (key === 'g') {
         event.preventDefault()
         groupSelected()
-      } else if (key === 'd' || key === 'v' || key === 'c') {
+      } else if (key === 'c') {
+        // Leave the browser's own copy alone when the user has highlighted text.
+        if (window.getSelection()?.toString()) return
+        if (copySelected()) event.preventDefault()
+      } else if (key === 'v') {
+        if (simActive) return
+        const at = pointer.current ? screenToFlowPosition(pointer.current) : undefined
+        const snapped = at && { x: Math.round(at.x / GRID[0]) * GRID[0], y: Math.round(at.y / GRID[1]) * GRID[1] }
+        if (pasteClipboard(snapped)) event.preventDefault()
+      } else if (key === 'd') {
         event.preventDefault()
-        duplicateSelected()
+        if (!simActive) duplicateSelected()
       }
     },
-    [undo, redo, groupSelected, duplicateSelected],
+    [undo, redo, groupSelected, duplicateSelected, copySelected, pasteClipboard, simActive, screenToFlowPosition],
   )
 
   useEffect(() => {
@@ -190,7 +205,15 @@ export default function FlowCanvas() {
   }, [edges, nodes, simActive, snapshot, showExpressions])
 
   return (
-    <div className="canvas-wrapper" onPointerDownCapture={keepShiftClickOnGate}>
+    <div
+      className="canvas-wrapper"
+      onPointerDownCapture={keepShiftClickOnGate}
+      onPointerMove={(e) => {
+        const overCanvas = e.target instanceof Element && e.target.closest('.react-flow__renderer')
+        pointer.current = overCanvas ? { x: e.clientX, y: e.clientY } : null
+      }}
+      onPointerLeave={() => (pointer.current = null)}
+    >
       <Toolbar />
       <HelpButton />
       <NetlistPanel />

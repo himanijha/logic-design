@@ -25,6 +25,8 @@ interface CircuitState {
   addGate: (gateType: GateType, position: { x: number; y: number }) => void
   removeSelected: () => void
   duplicateSelected: () => void
+  copySelected: () => boolean
+  pasteClipboard: (at?: { x: number; y: number }) => boolean
   groupSelected: () => void
   ungroup: (groupId: string) => void
   renameGate: (nodeId: string, label: string) => void
@@ -54,6 +56,51 @@ export function nextInputName(nodes: CanvasNode[]): string {
   while (used.has(`IN${i}`)) i++
   return `IN${i}`
 }
+
+const PASTE_OFFSET = 40
+
+/** Copies nodes plus the wires running between them, giving everything
+ * fresh ids — including a collapsed block's internal gates and wires, which
+ * would otherwise collide with the original's once the canvas is flattened
+ * for simulation. Clones come back selected and shifted by `offset`. */
+function cloneSubgraph(nodes: CanvasNode[], edges: Edge[], offset: { x: number; y: number }) {
+  const idMap = new Map(nodes.map((n) => [n.id, nanoid(8)]))
+
+  const clones = nodes.map((n): CanvasNode => {
+    const position = { x: n.position.x + offset.x, y: n.position.y + offset.y }
+    if (n.type !== 'group') return { ...n, id: idMap.get(n.id)!, selected: true, position, data: { ...n.data } }
+
+    const innerIds = new Map(n.data.internalNodes.map((g) => [g.id, nanoid(8)]))
+    const remap = (m: GroupPortMapping) => ({ ...m, internalGateId: innerIds.get(m.internalGateId)! })
+    return {
+      ...n,
+      id: idMap.get(n.id)!,
+      selected: true,
+      position,
+      data: {
+        ...n.data,
+        internalNodes: n.data.internalNodes.map((g) => ({ ...g, id: innerIds.get(g.id)!, data: { ...g.data } })),
+        internalEdges: n.data.internalEdges.map((e) => ({
+          ...e,
+          id: nanoid(8),
+          source: innerIds.get(e.source)!,
+          target: innerIds.get(e.target)!,
+        })),
+        inputs: n.data.inputs.map(remap),
+        outputs: n.data.outputs.map(remap),
+      },
+    }
+  })
+
+  const clonedEdges: Edge[] = edges
+    .filter((e) => idMap.has(e.source) && idMap.has(e.target))
+    .map((e) => ({ ...e, id: nanoid(8), source: idMap.get(e.source)!, target: idMap.get(e.target)!, selected: true }))
+
+  return { nodes: clones, edges: clonedEdges }
+}
+
+// Lives outside the store so copying never creates an undo step.
+let clipboard: { nodes: CanvasNode[]; edges: Edge[]; pastes: number } | null = null
 
 function portLabel(node: GateNode, portId: string): string {
   const spec = GATE_SPECS[node.data.gateType]
@@ -128,40 +175,40 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
       duplicateSelected: () => {
         const selectedNodes = get().nodes.filter((n) => n.selected)
         if (selectedNodes.length === 0) return
-
-        const idMap = new Map<string, string>()
-        const offset = { x: 40, y: 40 }
-
-        const clones: CanvasNode[] = selectedNodes.map((n) => {
-          const newId = nanoid(8)
-          idMap.set(n.id, newId)
-          return {
-            ...n,
-            id: newId,
-            selected: true,
-            position: { x: n.position.x + offset.x, y: n.position.y + offset.y },
-            data: { ...n.data },
-          } as CanvasNode
-        })
-
-        const selectedEdges = get().edges.filter(
-          (e) => idMap.has(e.source) && idMap.has(e.target),
-        )
-        const clonedEdges: Edge[] = selectedEdges.map((e) => ({
-          ...e,
-          id: nanoid(8),
-          source: idMap.get(e.source)!,
-          target: idMap.get(e.target)!,
-          selected: true,
-        }))
-
+        const copy = cloneSubgraph(selectedNodes, get().edges, { x: PASTE_OFFSET, y: PASTE_OFFSET })
         set({
-          nodes: [
-            ...get().nodes.map((n) => ({ ...n, selected: false })),
-            ...clones,
-          ],
-          edges: [...get().edges.map((e) => ({ ...e, selected: false })), ...clonedEdges],
+          nodes: [...get().nodes.map((n) => ({ ...n, selected: false })), ...copy.nodes],
+          edges: [...get().edges.map((e) => ({ ...e, selected: false })), ...copy.edges],
         })
+      },
+
+      copySelected: () => {
+        const selectedNodes = get().nodes.filter((n) => n.selected)
+        if (selectedNodes.length === 0) return false
+        const ids = new Set(selectedNodes.map((n) => n.id))
+        clipboard = {
+          nodes: structuredClone(selectedNodes),
+          edges: structuredClone(get().edges.filter((e) => ids.has(e.source) && ids.has(e.target))),
+          pastes: 0,
+        }
+        return true
+      },
+
+      pasteClipboard: (at) => {
+        if (!clipboard) return false
+        clipboard.pastes += 1
+        // Land the copy's top-left at the cursor if we know it, else step it
+        // down-right from the original a little further on each paste.
+        const left = Math.min(...clipboard.nodes.map((n) => n.position.x))
+        const top = Math.min(...clipboard.nodes.map((n) => n.position.y))
+        const step = PASTE_OFFSET * clipboard.pastes
+        const offset = at ? { x: at.x - left, y: at.y - top } : { x: step, y: step }
+        const copy = cloneSubgraph(clipboard.nodes, clipboard.edges, offset)
+        set({
+          nodes: [...get().nodes.map((n) => ({ ...n, selected: false })), ...copy.nodes],
+          edges: [...get().edges.map((e) => ({ ...e, selected: false })), ...copy.edges],
+        })
+        return true
       },
 
       groupSelected: () => {

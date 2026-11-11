@@ -24,7 +24,7 @@ export default function HelpButton() {
                 <li>Drag from one gate's port to another's to wire them together.</li>
                 <li>Click a gate or wire to select it; Shift-click more gates, or hold Shift and drag a box over them, to select several.</li>
                 <li>
-                  <b>Backspace</b>/<b>Delete</b> removes the selection, <b>Ctrl/Cmd+D</b> duplicates it,{' '}
+                  <b>Backspace</b>/<b>Delete</b> removes the selection, <b>Ctrl/Cmd+C</b> then <b>Ctrl/Cmd+V</b> copies and pastes it (paste as many times as you like, collapsed blocks included), <b>Ctrl/Cmd+D</b> duplicates it,{' '}
                   <b>Ctrl/Cmd+Z</b> undoes, <b>Ctrl/Cmd+Shift+Z</b> redoes.
                 </li>
                 <li>New INPUTs are named A, B, C…; double-click a gate's name (the small text under it) to rename it, e.g. to x, y, z or Cin.</li>

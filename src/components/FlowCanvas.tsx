@@ -56,6 +56,7 @@ export default function FlowCanvas() {
   const toggleInput = useSimulationStore((s) => s.toggleInput)
   const tickClock = useSimulationStore((s) => s.tickClock)
   const showExpressions = useUiStore((s) => s.showExpressions)
+  const setEditingWireId = useUiStore((s) => s.setEditingWireId)
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
@@ -160,6 +161,9 @@ export default function FlowCanvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onEdgeDoubleClick={(_, edge) => {
+          if (!simActive) setEditingWireId(edge.id)
+        }}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         defaultEdgeOptions={{ type: WIRE_EDGE_TYPE }}

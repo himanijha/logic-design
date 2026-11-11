@@ -27,7 +27,8 @@ export default function HelpButton() {
                   <b>Backspace</b>/<b>Delete</b> removes the selection, <b>Ctrl/Cmd+D</b> duplicates it,{' '}
                   <b>Ctrl/Cmd+Z</b> undoes, <b>Ctrl/Cmd+Shift+Z</b> redoes.
                 </li>
-                <li>Double-click a gate's name (the small text under it) to rename it — useful for giving an INPUT a variable name like x, y, z.</li>
+                <li>New INPUTs are named A, B, C…; double-click a gate's name (the small text under it) to rename it, e.g. to x, y, z or Cin.</li>
+                <li>Double-click a wire to give it a name; double-click the name to change it, or clear it to remove it.</li>
               </ul>
             </Section>
 

@@ -28,6 +28,7 @@ interface CircuitState {
   groupSelected: () => void
   ungroup: (groupId: string) => void
   renameGate: (nodeId: string, label: string) => void
+  renameWire: (edgeId: string, label: string) => void
   setNodes: (nodes: CanvasNode[]) => void
   setEdges: (edges: Edge[]) => void
   loadCircuit: (circuit: { nodes: CanvasNode[]; edges: Edge[] }) => void
@@ -40,6 +41,18 @@ function makeGateNode(gateType: GateType, position: { x: number; y: number }): G
     position,
     data: { gateType },
   }
+}
+
+const INPUT_NAMES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+
+export function nextInputName(nodes: CanvasNode[]): string {
+  const gates = nodes.flatMap((n) => (n.type === 'group' ? n.data.internalNodes : [n]))
+  const used = new Set(gates.filter((g) => g.data.gateType === 'INPUT').map((g) => g.data.label))
+  const free = INPUT_NAMES.find((name) => !used.has(name))
+  if (free) return free
+  let i = 1
+  while (used.has(`IN${i}`)) i++
+  return `IN${i}`
 }
 
 function portLabel(node: GateNode, portId: string): string {
@@ -95,7 +108,9 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
       },
 
       addGate: (gateType, position) => {
-        set({ nodes: [...get().nodes, makeGateNode(gateType, position)] })
+        const node = makeGateNode(gateType, position)
+        if (gateType === 'INPUT') node.data.label = nextInputName(get().nodes)
+        set({ nodes: [...get().nodes, node] })
       },
 
       removeSelected: () => {
@@ -268,6 +283,15 @@ export const useCircuitStore = createWithEqualityFn<CircuitState>()(
             if (n.type === 'group') return { ...n, data: { ...n.data, label: trimmed || n.data.label } }
             return { ...n, data: { ...n.data, label: trimmed || undefined } }
           }),
+        })
+      },
+
+      renameWire: (edgeId, label) => {
+        const trimmed = label.trim()
+        set({
+          edges: get().edges.map((e) =>
+            e.id === edgeId ? { ...e, data: { ...e.data, label: trimmed || undefined } } : e,
+          ),
         })
       },
 

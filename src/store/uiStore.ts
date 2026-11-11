@@ -9,6 +9,8 @@ interface UiState {
   toggleShowExpressions: () => void
   helpOpen: boolean
   toggleHelp: () => void
+  editingWireId: string | null
+  setEditingWireId: (id: string | null) => void
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -20,4 +22,6 @@ export const useUiStore = create<UiState>((set) => ({
   toggleShowExpressions: () => set((s) => ({ showExpressions: !s.showExpressions })),
   helpOpen: false,
   toggleHelp: () => set((s) => ({ helpOpen: !s.helpOpen })),
+  editingWireId: null,
+  setEditingWireId: (id) => set({ editingWireId: id }),
 }))

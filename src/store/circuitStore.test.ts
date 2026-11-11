@@ -54,3 +54,36 @@ describe('circuitStore grouping', () => {
     expect(afterUngroup.edges).toHaveLength(3)
   })
 })
+
+describe('circuitStore labels', () => {
+  it('names new inputs A, B, C… and reuses a name freed by renaming', () => {
+    const { addGate, renameGate } = useCircuitStore.getState()
+    addGate('INPUT', { x: 0, y: 0 })
+    addGate('INPUT', { x: 0, y: 100 })
+    addGate('AND', { x: 200, y: 50 })
+
+    const [a, b, and] = useCircuitStore.getState().nodes
+    expect(a.data.label).toBe('A')
+    expect(b.data.label).toBe('B')
+    expect(and.data.label).toBeUndefined()
+
+    renameGate(a.id, 'x')
+    addGate('INPUT', { x: 0, y: 200 })
+    expect(useCircuitStore.getState().nodes[3].data.label).toBe('A')
+  })
+
+  it('sets and clears a wire label', () => {
+    const { addGate, onConnect } = useCircuitStore.getState()
+    addGate('INPUT', { x: 0, y: 0 })
+    addGate('OUTPUT', { x: 200, y: 0 })
+    const [input, output] = useCircuitStore.getState().nodes
+    onConnect({ source: input.id, sourceHandle: 'out', target: output.id, targetHandle: 'a' })
+
+    const wire = useCircuitStore.getState().edges[0]
+    useCircuitStore.getState().renameWire(wire.id, '  carry ')
+    expect(useCircuitStore.getState().edges[0].data?.label).toBe('carry')
+
+    useCircuitStore.getState().renameWire(wire.id, '   ')
+    expect(useCircuitStore.getState().edges[0].data?.label).toBeUndefined()
+  })
+})

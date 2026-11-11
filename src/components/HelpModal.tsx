@@ -35,7 +35,7 @@ export default function HelpButton() {
             <Section title="Grouping / collapsing">
               <ul>
                 <li>Select two or more gates, then click <b>Group</b> (or <b>Ctrl/Cmd+G</b>).</li>
-                <li>They collapse into one block; wires crossing the selection boundary become its ports.</li>
+                <li>They collapse into one block; wires crossing the selection boundary become its ports, and each output port is labeled with the expression it computes (hover to see a long one in full).</li>
                 <li>Click the <b>⤢</b> button on a collapsed block to expand it back.</li>
               </ul>
             </Section>

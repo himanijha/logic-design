@@ -90,8 +90,27 @@ export default function FlowCanvas() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
+  const groupOutputExprs = useMemo(() => {
+    if (!nodes.some((n) => n.type === 'group')) return undefined
+    const netlist = flattenCanvas(nodes, edges)
+    const exprs = computeExpressions(netlist.nodes, netlist.edges)
+    const byGroup: Record<string, Record<string, string>> = {}
+    for (const node of nodes) {
+      if (node.type !== 'group') continue
+      byGroup[node.id] = Object.fromEntries(
+        node.data.outputs.map((port) => [port.portId, nodeOutputExpr(nodes, netlist, exprs, node.id, port.portId)]),
+      )
+    }
+    return byGroup
+  }, [nodes, edges])
+
   const displayNodes = useMemo<CanvasNode[]>(() => {
-    if (!simActive || !snapshot) return nodes
+    const withExprs = (node: CanvasNode): CanvasNode =>
+      node.type === 'group' && groupOutputExprs
+        ? { ...node, data: { ...node.data, outputExprs: groupOutputExprs[node.id] } }
+        : node
+
+    if (!simActive || !snapshot) return groupOutputExprs ? nodes.map(withExprs) : nodes
 
     const netlist = flattenCanvas(nodes, edges)
     const changedSet = new Set(snapshot.changedGateIds)
@@ -105,7 +124,8 @@ export default function FlowCanvas() {
         for (const port of node.data.outputs) {
           portValues[port.portId] = nodeOutputValue(nodes, netlist, snapshot.outputs, node.id, port.portId)
         }
-        return { ...node, data: { ...node.data, portValues } }
+        const grouped = withExprs(node)
+        return { ...grouped, data: { ...grouped.data, portValues } } as CanvasNode
       }
 
       const spec = GATE_SPECS[node.data.gateType]
@@ -128,7 +148,7 @@ export default function FlowCanvas() {
         },
       }
     })
-  }, [nodes, edges, simActive, snapshot, toggleInput, tickClock])
+  }, [nodes, edges, simActive, snapshot, toggleInput, tickClock, groupOutputExprs])
 
   const displayEdges = useMemo<Edge[]>(() => {
     if (!simActive && !showExpressions) return edges

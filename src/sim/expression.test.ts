@@ -1,7 +1,8 @@
 import type { Edge } from '@xyflow/react'
 import { describe, expect, it } from 'vitest'
 import type { GateNode } from '../model/types'
-import { computeExpressions } from './expression'
+import { useCircuitStore } from '../store/circuitStore'
+import { computeCanvasExpressions, computeExpressions, nodeOutputExpr } from './expression'
 
 function gate(id: string, gateType: GateNode['data']['gateType'], label?: string): GateNode {
   return { id, type: 'gate', position: { x: 0, y: 0 }, data: { gateType, label } }
@@ -67,5 +68,40 @@ describe('computeExpressions', () => {
     const exprs = computeExpressions(nodes, edges)
     expect(exprs.a).toEqual(['⟲'])
     expect(exprs.b).toEqual(['⟲'])
+  })
+})
+
+describe('nodeOutputExpr on a collapsed group', () => {
+  it('reports the expression of the internal gate behind each output port', () => {
+    useCircuitStore.setState({ nodes: [], edges: [] })
+    const { addGate, onConnect } = useCircuitStore.getState()
+    addGate('INPUT', { x: 0, y: 0 })
+    addGate('INPUT', { x: 0, y: 100 })
+    addGate('AND', { x: 200, y: 50 })
+    addGate('NOT', { x: 300, y: 50 })
+    addGate('OUTPUT', { x: 400, y: 50 })
+    const [a, b, and, not, out] = useCircuitStore.getState().nodes
+    onConnect({ source: a.id, sourceHandle: 'out', target: and.id, targetHandle: 'a' })
+    onConnect({ source: b.id, sourceHandle: 'out', target: and.id, targetHandle: 'b' })
+    onConnect({ source: and.id, sourceHandle: 'out', target: not.id, targetHandle: 'a' })
+    onConnect({ source: not.id, sourceHandle: 'out', target: out.id, targetHandle: 'a' })
+
+    const before = computeCanvasExpressions(useCircuitStore.getState().nodes, useCircuitStore.getState().edges)
+    const expected = nodeOutputExpr(useCircuitStore.getState().nodes, before.netlist, before.exprs, not.id, 'out')
+
+    useCircuitStore.setState({
+      nodes: useCircuitStore.getState().nodes.map((n) => ({ ...n, selected: n.id === and.id || n.id === not.id })),
+    })
+    useCircuitStore.getState().groupSelected()
+
+    const { nodes, edges } = useCircuitStore.getState()
+    const group = nodes.find((n) => n.type === 'group')
+    if (group?.type !== 'group') throw new Error('expected group node')
+    const after = computeCanvasExpressions(nodes, edges)
+    const actual = nodeOutputExpr(nodes, after.netlist, after.exprs, group.id, group.data.outputs[0].portId)
+
+    expect(actual).toBe(expected)
+    expect(actual).toContain('A')
+    expect(actual).toContain('B')
   })
 })

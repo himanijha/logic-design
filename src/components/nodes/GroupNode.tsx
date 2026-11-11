@@ -17,6 +17,7 @@ function GroupNode({ id, data, selected }: NodeProps<GroupNodeT>) {
   const portCount = Math.max(data.inputs.length, data.outputs.length, 1)
   const height = Math.max(MIN_HEIGHT, portCount * PORT_ROW_HEIGHT)
   const values = data.portValues as Record<string, boolean> | undefined
+  const outputExprs = data.outputExprs as Record<string, string> | undefined
 
   return (
     <div className={`group-node${selected ? ' selected' : ''}`} style={{ width: WIDTH, height }}>
@@ -46,19 +47,25 @@ function GroupNode({ id, data, selected }: NodeProps<GroupNodeT>) {
         </button>
       </div>
 
-      {data.outputs.map((port, i) => (
-        <Handle
-          key={port.portId}
-          id={port.portId}
-          type="source"
-          position={Position.Right}
-          style={{ top: portY(i, data.outputs.length, height) }}
-          className="port-handle"
-        >
-          <span className="port-label port-label-right">{port.label}</span>
-          {values && <ValueDot value={values[port.portId]} side="right" />}
-        </Handle>
-      ))}
+      {data.outputs.map((port, i) => {
+        const expr = outputExprs?.[port.portId]
+        return (
+          <Handle
+            key={port.portId}
+            id={port.portId}
+            type="source"
+            position={Position.Right}
+            style={{ top: portY(i, data.outputs.length, height) }}
+            className="port-handle"
+            title={expr}
+          >
+            <span className={`port-label port-label-right${expr ? ' port-label-expr' : ''}`}>
+              {expr ?? port.label}
+            </span>
+            {values && <ValueDot value={values[port.portId]} side="right" />}
+          </Handle>
+        )
+      })}
     </div>
   )
 }

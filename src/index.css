@@ -222,6 +222,15 @@ body {
   right: 10px;
 }
 
+.port-label-expr {
+  max-width: 72px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: ui-monospace, Consolas, monospace;
+  color: var(--accent);
+  opacity: 0.9;
+}
+
 .gate-node.changed {
   filter: drop-shadow(0 0 0 2px var(--changed-ring));
 }

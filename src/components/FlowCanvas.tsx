@@ -3,6 +3,7 @@ import {
   Controls,
   MiniMap,
   ReactFlow,
+  SelectionMode,
   type Edge,
   type IsValidConnection,
 } from '@xyflow/react'
@@ -33,6 +34,16 @@ const isValidConnection: IsValidConnection = (conn) => {
   // Ports render as separate target/source handles, so React Flow already
   // restricts a drag to the opposite handle type. Just guard self-loops.
   return conn.source !== conn.target
+}
+
+// With Shift held, React Flow starts a box selection on any pointer-down,
+// even one over a gate, and the slightest mouse movement then clears the
+// selection and swallows the click. Stopping the event above React Flow
+// keeps it a plain Shift-click, which toggles that gate in the selection.
+function keepShiftClickOnGate(event: React.PointerEvent) {
+  if (!event.shiftKey || !(event.target instanceof Element)) return
+  if (event.target.closest('.react-flow__handle')) return
+  if (event.target.closest('.react-flow__node')) event.stopPropagation()
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {
@@ -170,7 +181,7 @@ export default function FlowCanvas() {
   }, [edges, nodes, simActive, snapshot, showExpressions])
 
   return (
-    <div className="canvas-wrapper">
+    <div className="canvas-wrapper" onPointerDownCapture={keepShiftClickOnGate}>
       <Toolbar />
       <HelpButton />
       <NetlistPanel />
@@ -194,6 +205,7 @@ export default function FlowCanvas() {
         snapToGrid
         snapGrid={GRID}
         multiSelectionKeyCode={['Shift', 'Meta', 'Control']}
+        selectionMode={SelectionMode.Partial}
         fitView
         proOptions={{ hideAttribution: true }}
       >

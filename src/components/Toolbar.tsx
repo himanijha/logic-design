@@ -53,7 +53,8 @@ export default function Toolbar() {
   const showExpressions = useUiStore((s) => s.showExpressions)
   const toggleShowExpressions = useUiStore((s) => s.toggleShowExpressions)
 
-  const selectedCount = nodes.filter((n) => n.selected).length
+  // groupSelected only collapses plain gates (blocks don't nest), so count just those.
+  const selectedCount = nodes.filter((n) => n.selected && n.type === 'gate').length
 
   function handleAddGate(gateType: GateType) {
     const index = placedCount.current++

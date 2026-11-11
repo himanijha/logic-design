@@ -22,7 +22,7 @@ export default function HelpButton() {
               <ul>
                 <li>Click a gate in the top-left palette to drop it on the canvas.</li>
                 <li>Drag from one gate's port to another's to wire them together.</li>
-                <li>Click a gate or wire to select it; shift-click or drag a box to select several.</li>
+                <li>Click a gate or wire to select it; Shift-click more gates, or hold Shift and drag a box over them, to select several.</li>
                 <li>
                   <b>Backspace</b>/<b>Delete</b> removes the selection, <b>Ctrl/Cmd+D</b> duplicates it,{' '}
                   <b>Ctrl/Cmd+Z</b> undoes, <b>Ctrl/Cmd+Shift+Z</b> redoes.

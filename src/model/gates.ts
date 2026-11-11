@@ -45,65 +45,61 @@ export const GATE_SPECS: Record<GateType, GateSpec> = {
     type: 'AND',
     label: 'AND',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: bin((a, b) => a && b),
   },
   OR: {
     type: 'OR',
     label: 'OR',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: bin((a, b) => a || b),
   },
   NOT: {
     type: 'NOT',
     label: 'NOT',
     inputs: [{ id: 'a', label: 'A' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: (inputs) => [!inputs[0]],
   },
   XOR: {
     type: 'XOR',
     label: 'XOR',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: bin((a, b) => a !== b),
   },
   NAND: {
     type: 'NAND',
     label: 'NAND',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: bin((a, b) => !(a && b)),
   },
   NOR: {
     type: 'NOR',
     label: 'NOR',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: bin((a, b) => !(a || b)),
   },
   XNOR: {
     type: 'XNOR',
     label: 'XNOR',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: bin((a, b) => a === b),
   },
   INPUT: {
     type: 'INPUT',
     label: 'IN',
     inputs: [],
-    // No port label here: the gate body already says "IN" and the
-    // pointed-right shape shows which way current flows, so labeling the
-    // single port "OUT" right next to it just duplicated/contradicted that.
     outputs: [{ id: 'out', label: '' }],
     evaluate: () => [false],
   },
   OUTPUT: {
     type: 'OUTPUT',
     label: 'OUT',
-    // Same reasoning as INPUT above, mirrored: no "A" label on the one port.
     inputs: [{ id: 'a', label: '' }],
     outputs: [],
     evaluate: (inputs) => [Boolean(inputs[0])],
@@ -128,7 +124,7 @@ export const GATE_SPECS: Record<GateType, GateSpec> = {
     type: 'MUX2',
     label: 'MUX2',
     inputs: [{ id: 'a', label: 'A' }, { id: 'b', label: 'B' }, { id: 'sel', label: 'S' }],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: ([a, b, sel]) => [sel ? Boolean(b) : Boolean(a)],
   },
   MUX4: {
@@ -142,7 +138,7 @@ export const GATE_SPECS: Record<GateType, GateSpec> = {
       { id: 's0', label: 'S0' },
       { id: 's1', label: 'S1' },
     ],
-    outputs: [{ id: 'out', label: 'OUT' }],
+    outputs: [{ id: 'out', label: '' }],
     evaluate: ([d0, d1, d2, d3, s0, s1]) => {
       const index = (s1 ? 2 : 0) + (s0 ? 1 : 0)
       return [Boolean([d0, d1, d2, d3][index])]

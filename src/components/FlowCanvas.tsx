@@ -11,7 +11,7 @@ import '@xyflow/react/dist/style.css'
 import { useCallback, useEffect, useMemo } from 'react'
 import { GATE_SPECS } from '../model/gates'
 import type { CanvasNode } from '../model/types'
-import { computeExpressions, nodeOutputExpr } from '../sim/expression'
+import { computeExpressions, nodeInputExpr, nodeOutputExpr } from '../sim/expression'
 import { flattenCanvas } from '../sim/netlist'
 import { nodeInputValue, nodeOutputValue } from '../sim/portValue'
 import { useCircuitStore, useTemporalCircuitStore, WIRE_EDGE_TYPE } from '../store/circuitStore'
@@ -101,27 +101,35 @@ export default function FlowCanvas() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
-  const groupOutputExprs = useMemo(() => {
-    if (!nodes.some((n) => n.type === 'group')) return undefined
+  // Expressions shown on nodes themselves: each collapsed block's output
+  // ports, and the full expression arriving at each OUT gate.
+  const nodeExprs = useMemo(() => {
+    const isOutput = (n: CanvasNode) => n.type === 'gate' && n.data.gateType === 'OUTPUT'
+    if (!nodes.some((n) => n.type === 'group' || isOutput(n))) return undefined
     const netlist = flattenCanvas(nodes, edges)
     const exprs = computeExpressions(netlist.nodes, netlist.edges)
-    const byGroup: Record<string, Record<string, string>> = {}
+    const byNode: Record<string, Record<string, unknown>> = {}
     for (const node of nodes) {
-      if (node.type !== 'group') continue
-      byGroup[node.id] = Object.fromEntries(
-        node.data.outputs.map((port) => [port.portId, nodeOutputExpr(nodes, netlist, exprs, node.id, port.portId)]),
-      )
+      if (node.type === 'group') {
+        byNode[node.id] = {
+          outputExprs: Object.fromEntries(
+            node.data.outputs.map((port) => [port.portId, nodeOutputExpr(nodes, netlist, exprs, node.id, port.portId)]),
+          ),
+        }
+      } else if (isOutput(node) && edges.some((e) => e.target === node.id)) {
+        byNode[node.id] = { expr: nodeInputExpr(nodes, edges, netlist, exprs, node.id, 'a') }
+      }
     }
-    return byGroup
+    return byNode
   }, [nodes, edges])
 
   const displayNodes = useMemo<CanvasNode[]>(() => {
-    const withExprs = (node: CanvasNode): CanvasNode =>
-      node.type === 'group' && groupOutputExprs
-        ? { ...node, data: { ...node.data, outputExprs: groupOutputExprs[node.id] } }
-        : node
+    const withExprs = (node: CanvasNode): CanvasNode => {
+      const extra = nodeExprs?.[node.id]
+      return extra ? ({ ...node, data: { ...node.data, ...extra } } as CanvasNode) : node
+    }
 
-    if (!simActive || !snapshot) return groupOutputExprs ? nodes.map(withExprs) : nodes
+    if (!simActive || !snapshot) return nodeExprs ? nodes.map(withExprs) : nodes
 
     const netlist = flattenCanvas(nodes, edges)
     const changedSet = new Set(snapshot.changedGateIds)
@@ -152,6 +160,7 @@ export default function FlowCanvas() {
         ...node,
         data: {
           ...node.data,
+          ...nodeExprs?.[node.id],
           portValues,
           changed: changedSet.has(node.id),
           onToggleInput: node.data.gateType === 'INPUT' ? () => toggleInput(node.id) : undefined,
@@ -159,7 +168,7 @@ export default function FlowCanvas() {
         },
       }
     })
-  }, [nodes, edges, simActive, snapshot, toggleInput, tickClock, groupOutputExprs])
+  }, [nodes, edges, simActive, snapshot, toggleInput, tickClock, nodeExprs])
 
   const displayEdges = useMemo<Edge[]>(() => {
     if (!simActive && !showExpressions) return edges

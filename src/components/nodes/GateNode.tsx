@@ -23,6 +23,8 @@ function GateNode({ id, data, selected }: NodeProps<GateNodeT>) {
   const onToggleInput = data.onToggleInput as (() => void) | undefined
   const onTick = data.onTick as (() => void) | undefined
   const clickable = data.gateType === 'INPUT' && Boolean(onToggleInput)
+  const expr = data.gateType === 'OUTPUT' ? (data.expr as string | undefined) : undefined
+  const title = expr ? (data.label ? `${data.label} = ${expr}` : expr) : (data.label ?? spec.label)
 
   function startEditing() {
     setDraft(data.label ?? '')
@@ -76,14 +78,14 @@ function GateNode({ id, data, selected }: NodeProps<GateNodeT>) {
         />
       ) : (
         <div
-          className="gate-type-label"
+          className={`gate-type-label${expr ? ' gate-expr-label' : ''}`}
           title="Double-click to rename"
           onDoubleClick={(e) => {
             e.stopPropagation()
             startEditing()
           }}
         >
-          {data.label ?? spec.label}
+          {title}
         </div>
       )}
 

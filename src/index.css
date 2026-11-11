@@ -176,6 +176,17 @@ body {
   cursor: text;
 }
 
+.gate-expr-label {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-family: ui-monospace, Consolas, monospace;
+  font-weight: 600;
+  color: var(--accent);
+  opacity: 1;
+}
+
 .gate-type-label:hover {
   opacity: 1;
   text-decoration: underline dashed;
